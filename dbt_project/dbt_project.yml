@@ -1,0 +1,18 @@
+name: 'taxi_analytics'
+version: '1.0.0'
+config-version: 2
+profile: 'taxi_analytics'
+model-paths: ["models"]
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  taxi_analytics:
+    marts:
+      +materialized: table
+
+on-run-end:
+  - 'GRANT USAGE ON SCHEMA public TO "user";'
+  - 'GRANT SELECT ON ALL TABLES IN SCHEMA public TO "user";'

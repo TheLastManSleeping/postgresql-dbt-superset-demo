@@ -1,0 +1,71 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=dbt_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d dbt_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  data-loader:
+    build: ./data_loader
+    container_name: data-loader
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - DATA_SIZE=small
+      - PG_HOST=postgres
+      - PG_DATABASE=dbt_db
+      - PG_USER=user
+      - PG_PASSWORD=password
+    restart: 'no' # <<< ИЗМЕНЕНИЕ: этот сервис должен выполниться один раз и остановиться
+
+  dbt:
+    image: ghcr.io/dbt-labs/dbt-postgres:1.8.2
+    container_name: dbt
+    volumes:
+      - ./dbt_project:/usr/app
+    depends_on: # <<< ДОБАВЛЕН БЛОК
+      data-loader:
+        condition: service_completed_successfully
+    environment:
+      - DBT_PG_HOST=postgres
+      - DBT_PG_USER=user
+      - DBT_PG_PASS=password
+      - DBT_PG_DB=dbt_db
+      - DBT_PROFILES_DIR=/usr/app
+    entrypoint: ""
+    command: ["tail", "-f", "/dev/null"]
+
+  superset:
+    build: ./superset_custom
+    container_name: superset
+    depends_on:
+      data-loader:
+        condition: service_completed_successfully
+    ports:
+      - "8088:8088"
+    environment:
+      - SUPERSET_SECRET_KEY=your_secret_key_for_superset_prod
+      - SUPERSET_LOAD_EXAMPLES=no
+    command: >
+      bash -c "
+        superset fab create-admin --username admin --firstname Superset --lastname Admin --email admin@superset.com --password admin || true &&
+        superset db upgrade &&
+        superset init &&
+        superset set-database-uri -d PostgreSQL -u 'postgresql+psycopg2://user:password@postgres:5432/dbt_db' &&
+        gunicorn --bind 0.0.0.0:8088 'superset.app:create_app()'
+      "
+
+volumes:
+  postgres_data:

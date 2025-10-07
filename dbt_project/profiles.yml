@@ -1,0 +1,12 @@
+taxi_analytics:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('DBT_PG_HOST') }}"
+      user: "{{ env_var('DBT_PG_USER') }}"
+      password: "{{ env_var('DBT_PG_PASS') }}"
+      port: 5432
+      dbname: "{{ env_var('DBT_PG_DB') }}"
+      schema: public
+      threads: 4
