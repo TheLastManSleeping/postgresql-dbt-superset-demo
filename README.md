@@ -90,7 +90,7 @@ docker compose exec dbt dbt run
 
 #### 3\. Настройте Superset
 
-1.  Откройте **[http://localhost:8088](https://www.google.com/search?q=http://localhost:8088)** и войдите, используя `admin` / `admin`.
+1.  Откройте **[http://localhost:8088]** и войдите, используя `admin` / `admin`.
 2.  В меню **Data -\> Datasets** нажмите **+ Dataset**.
 3.  Выберите `PostgreSQL`, схему `public` и таблицу `agg_trip_stats`.
 4.  Нажмите **ADD**.
@@ -108,3 +108,5 @@ docker compose exec dbt dbt run
     ```bash
     docker compose down -v
     ```
+    
+## Практическая часть находится в каталоге **practice_course**
