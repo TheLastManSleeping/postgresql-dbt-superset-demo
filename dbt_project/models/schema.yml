@@ -1,7 +1,28 @@
 version: 2
 
 sources:
-  - name: public
-    schema: public
+  - name: raw_taxi_data # Придумываем общее имя для группы источников
+    schema: public # Схема в Postgres, где лежит таблица
     tables:
-      - name: raw_taxi_trips
+      - name: raw_taxi_trips # Точное имя таблицы в Postgres
+        loaded_at_field: tpep_pickup_datetime # Указываем поле с датой
+        freshness:
+          warn_after: { count: 12, period: hour }
+          error_after: { count: 24, period: hour }
+
+models:
+  - name: stg_yellow_tripdata
+    description: "Очищенные сырые данные о поездках. Одна запись = одна поездка. Включает базовое переименование и приведение типов. Является основой для всех последующих витрин данных."
+    columns:
+      - name: pickup_datetime # Предположим, что это значение должно быть уникальным
+        description: "Дата и время начала поездки."
+        tests:
+          - unique
+          - not_null
+      - name: payment_type
+        description: "Числовой код, обозначающий метод оплаты поездки (1 - карта, 2 - наличные и т.д.)."
+        tests:
+          - accepted_values:
+              values: [1, 2, 3, 4] # Проверяем, что тип оплаты - один из известных
+      - name: total_amount
+        description: "Итоговая сумма, уплаченная пассажиром, включая все налоги и сборы."

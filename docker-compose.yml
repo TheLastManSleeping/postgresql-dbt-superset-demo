@@ -33,6 +33,8 @@ services:
   dbt:
     image: ghcr.io/dbt-labs/dbt-postgres:1.8.2
     container_name: dbt
+    ports:
+      - "8080:8080"
     volumes:
       - ./dbt_project:/usr/app
     depends_on: # <<< ДОБАВЛЕН БЛОК
