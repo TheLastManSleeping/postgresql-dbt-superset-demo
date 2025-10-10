@@ -28,7 +28,7 @@ services:
       - PG_DATABASE=dbt_db
       - PG_USER=user
       - PG_PASSWORD=password
-    restart: 'no' # <<< ИЗМЕНЕНИЕ: этот сервис должен выполниться один раз и остановиться
+    restart: 'no'
 
   dbt:
     image: ghcr.io/dbt-labs/dbt-postgres:1.8.2
@@ -37,7 +37,7 @@ services:
       - "8080:8080"
     volumes:
       - ./dbt_project:/usr/app
-    depends_on: # <<< ДОБАВЛЕН БЛОК
+    depends_on:
       data-loader:
         condition: service_completed_successfully
     environment:
@@ -50,24 +50,17 @@ services:
     command: ["tail", "-f", "/dev/null"]
 
   superset:
-    build: ./superset_custom
-    container_name: superset
-    depends_on:
-      data-loader:
-        condition: service_completed_successfully
-    ports:
-      - "8088:8088"
-    environment:
-      - SUPERSET_SECRET_KEY=your_secret_key_for_superset_prod
-      - SUPERSET_LOAD_EXAMPLES=no
-    command: >
-      bash -c "
-        superset fab create-admin --username admin --firstname Superset --lastname Admin --email admin@superset.com --password admin || true &&
-        superset db upgrade &&
-        superset init &&
-        superset set-database-uri -d PostgreSQL -u 'postgresql+psycopg2://user:password@postgres:5432/dbt_db' &&
-        gunicorn --bind 0.0.0.0:8088 'superset.app:create_app()'
-      "
+      build: ./superset_custom
+      container_name: superset
+      depends_on:
+        data-loader:
+          condition: service_completed_successfully
+      ports:
+        - "8088:8088"
+      environment:
+        - SUPERSET_SECRET_KEY=your_secret_key_for_superset_prod
+        - SUPERSET_LOAD_EXAMPLES=no
+      command: ["/app/start.sh"]
 
 volumes:
   postgres_data:
