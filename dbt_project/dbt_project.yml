@@ -4,14 +4,10 @@ config-version: 2
 profile: 'taxi_analytics'
 model-paths: ["models"]
 target-path: "target"
+snapshot-paths: ["snapshots"]
 clean-targets:
   - "target"
   - "dbt_packages"
-
-models:
-  taxi_analytics:
-    marts:
-      +materialized: table
 
 on-run-end:
   - 'GRANT USAGE ON SCHEMA public TO "user";'
